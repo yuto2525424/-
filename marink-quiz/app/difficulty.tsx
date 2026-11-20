@@ -1,4 +1,5 @@
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useConfirm } from '../src/components/ConfirmDialog';
 import { router } from 'expo-router';
 import { Header } from '../src/components/Header';
 import { Card } from '../src/components/Card';
@@ -10,6 +11,7 @@ import { colors } from '../src/theme/theme';
 
 export default function DifficultyScreen() {
   const { zukan, game, startGame, discardGame } = useApp();
+  const { ask, dialog } = useConfirm();
 
   const choose = (difficulty: Difficulty) => {
     const launch = () => {
@@ -17,10 +19,7 @@ export default function DifficultyScreen() {
       router.replace('/game');
     };
     if (game) {
-      Alert.alert('途中のゲームがあります', '途中のゲームを破棄して、この難易度で始めますか？', [
-        { text: 'やめる', style: 'cancel' },
-        { text: '破棄して始める', style: 'destructive', onPress: () => { discardGame(); launch(); } },
-      ]);
+      ask({ title: '途中のゲームがあります', message: '途中のゲームを破棄して、この難易度で始めますか？', confirmLabel: '破棄して始める', destructive: true, onConfirm: () => { discardGame(); launch(); } });
       return;
     }
     launch();
@@ -28,6 +27,7 @@ export default function DifficultyScreen() {
 
   return (
     <Screen>
+      {dialog}
       <Header title="難易度選択" />
       <ScrollView contentContainerStyle={styles.list}>
         {DIFFICULTIES.map((d) => {

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useConfirm } from '../src/components/ConfirmDialog';
 import { router } from 'expo-router';
 import { AnswerBubble } from '../src/components/AnswerBubble';
 import { Button } from '../src/components/Button';
@@ -23,6 +24,7 @@ export default function GameScreen() {
   const [input, setInput] = useState('');
   const [guessOpen, setGuessOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const { ask, dialog } = useConfirm();
 
   // ゲームが終わったら結果画面へ。ゲームが無い場合はホームへ戻す
   useEffect(() => {
@@ -49,24 +51,13 @@ export default function GameScreen() {
   };
 
   const confirmGiveUp = () => {
-    Alert.alert('降参しますか？', 'このゲームは敗北として終了します。', [
-      { text: '続ける', style: 'cancel' },
-      { text: '降参する', style: 'destructive', onPress: giveUp },
-    ]);
+    ask({ title: '降参しますか？', message: 'このゲームは敗北として終了します。', cancelLabel: '続ける', confirmLabel: '降参する', destructive: true, onConfirm: giveUp });
   };
 
   const confirmGuess = (text: string) => {
     const message = finalPhase ? 'これが最後の回答になります。この名前で決定しますか？' : 'この名前で回答しますか？';
-    Alert.alert('回答の確認', `「${text.trim()}」\n\n${message}`, [
-      { text: 'やめる', style: 'cancel' },
-      {
-        text: '回答する',
-        onPress: () => {
-          submitGuess(text);
-          setGuessOpen(false);
-        },
-      },
-    ]);
+    setGuessOpen(false);
+    ask({ title: '回答の確認', message: `「${text.trim()}」\n\n${message}`, confirmLabel: '回答する', onConfirm: () => submitGuess(text) });
   };
 
   return (
@@ -158,6 +149,7 @@ export default function GameScreen() {
           onSubmit={confirmGuess}
         />
         <HistoryModal visible={historyOpen} records={game.questions} onClose={() => setHistoryOpen(false)} />
+        {dialog}
       </KeyboardAvoidingView>
     </Screen>
   );

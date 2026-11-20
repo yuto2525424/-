@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useConfirm } from '../src/components/ConfirmDialog';
 import { router } from 'expo-router';
 import { Button } from '../src/components/Button';
 import { Screen } from '../src/components/Screen';
@@ -9,6 +10,7 @@ import { colors } from '../src/theme/theme';
 
 export default function HomeScreen() {
   const { ready, game, settings, startGame, discardGame, answerModeLabel } = useApp();
+  const { ask, dialog } = useConfirm();
   const difficultyLabel = useMemo(() => DIFFICULTY_INFO[settings.difficulty].label, [settings.difficulty]);
 
   const begin = () => {
@@ -17,10 +19,7 @@ export default function HomeScreen() {
       router.push('/game');
     };
     if (game) {
-      Alert.alert('途中のゲームがあります', '途中のゲームを破棄して、新しく始めますか？', [
-        { text: 'やめる', style: 'cancel' },
-        { text: '破棄して始める', style: 'destructive', onPress: () => { discardGame(); launch(); } },
-      ]);
+      ask({ title: '途中のゲームがあります', message: '途中のゲームを破棄して、新しく始めますか？', confirmLabel: '破棄して始める', destructive: true, onConfirm: () => { discardGame(); launch(); } });
       return;
     }
     launch();
@@ -28,6 +27,7 @@ export default function HomeScreen() {
 
   return (
     <Screen>
+      {dialog}
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.hero}>
           <Text style={styles.brand}>MARINK</Text>

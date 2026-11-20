@@ -1,4 +1,5 @@
-import { Alert, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { useConfirm } from '../src/components/ConfirmDialog';
 import { Button } from '../src/components/Button';
 import { Card } from '../src/components/Card';
 import { Header } from '../src/components/Header';
@@ -8,22 +9,15 @@ import { colors } from '../src/theme/theme';
 
 export default function SettingsScreen() {
   const { settings, updateSettings, resetProgress, answerModeLabel } = useApp();
+  const { ask, dialog } = useConfirm();
 
   const confirmReset = () => {
-    Alert.alert('記録をすべて消しますか？', '図鑑・成績・途中のゲームが消えます。この操作は取り消せません。', [
-      { text: 'やめる', style: 'cancel' },
-      {
-        text: '消去する',
-        style: 'destructive',
-        onPress: () => {
-          void resetProgress();
-        },
-      },
-    ]);
+    ask({ title: '記録をすべて消しますか？', message: '図鑑・成績・途中のゲームが消えます。この操作は取り消せません。', confirmLabel: '消去する', destructive: true, onConfirm: () => { void resetProgress(); } });
   };
 
   return (
     <Screen>
+      {dialog}
       <Header title="設定" />
       <ScrollView contentContainerStyle={styles.content}>
         <Card style={styles.card}>

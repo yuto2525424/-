@@ -189,7 +189,7 @@ export const EXTRA_SPECIES: Species[] = [
     taxa: taxa({ fish: true }),
     regions: ['太平洋', 'インド洋', '大西洋'],
     habitat: '普段は深海の中層で暮らし、ほとんど海面近くに現れません。',
-    env: { coralReef: false, coastal: false, openOcean: true, japanWaters: true, tropical: null },
+    env: { coralReef: false, coastal: false, openOcean: true, japanWaters: true, tropical: true },
     depthM: { min: 200, max: 1000 },
     sizeCm: { min: 200, max: 800 },
     sizeNote: '全長の目安です。記録では8m近い報告もあります。',

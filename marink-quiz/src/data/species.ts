@@ -1,4 +1,5 @@
 import type { Species } from '../types';
+import { EXTRA_SPECIES } from './speciesExtra';
 
 /**
  * 海洋生物データベース（初期版 25種）。
@@ -13,7 +14,7 @@ import type { Species } from '../types';
 
 const REF_GENERAL = '一般的な海洋生物学の解説（水族館・海洋研究機関の公開情報の一般的知見）';
 
-export const SPECIES: Species[] = [
+const BASE_SPECIES: Species[] = [
   // ───────────── 初級 ─────────────
   {
     id: 'kakure-kumanomi',
@@ -663,3 +664,6 @@ export const SPECIES: Species[] = [
     source: { references: [REF_GENERAL], verified: false },
   },
 ];
+
+/** 全種（初版 + 追加分）。ゲーム・図鑑・判定はこの一覧を使う */
+export const SPECIES: Species[] = [...BASE_SPECIES, ...EXTRA_SPECIES];

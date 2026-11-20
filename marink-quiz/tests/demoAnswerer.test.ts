@@ -124,3 +124,19 @@ describe('デモモードの未対応・拒否', () => {
     }
   });
 });
+
+describe('大きな分類群の質問（登録データから判断）', () => {
+  it('軟体動物・脊椎動物・無脊椎動物を判定する', () => {
+    expect(answerOf('madako', '軟体動物ですか？')).toBe('yes');
+    expect(answerOf('shachi', '軟体動物ですか？')).toBe('no');
+    expect(answerOf('shachi', '脊椎動物ですか？')).toBe('yes');
+    expect(answerOf('oniohitode', '無脊椎動物ですか？')).toBe('yes');
+    expect(answerOf('shachi', '無脊椎動物ですか？')).toBe('no');
+  });
+
+  it('硬骨魚と軟骨魚を区別する', () => {
+    expect(answerOf('kakure-kumanomi', '硬骨魚ですか？')).toBe('yes');
+    expect(answerOf('jinbe-zame', '軟骨魚ですか？')).toBe('yes');
+    expect(answerOf('jinbe-zame', '硬骨魚ですか？')).toBe('no');
+  });
+});

@@ -45,7 +45,7 @@ export default function HowToScreen() {
         <Card style={styles.card}>
           <Text style={styles.section}>デモモードについて</Text>
           <Text style={styles.item}>
-            AIのサーバーが未設定のときは、アプリに登録された生き物の情報だけで答えるデモモードで遊べます。登録のない特徴を聞かれた場合は、無理に答えず「どちらともいえない」か「理解できない」と表示します。
+            AIのサーバーが未設定のときは、アプリに登録された生き物の情報だけで答えるデモモードで遊べます。登録にない特徴を聞かれた場合は、「どちらともいえない」と答えます。
           </Text>
         </Card>
       </ScrollView>

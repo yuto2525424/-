@@ -14,3 +14,14 @@ describe('AI出力の検証（3択に限定）', () => {
     expect(parseThreeWayAnswer('')).toBeNull();
   });
 });
+
+import { demoAnswerProvider } from '../src/services/answerProvider';
+import { findSpeciesById } from '../src/domain/species';
+
+describe('デモモードは「わかりません」を返さない', () => {
+  it('登録にない質問も、3択のどれかで答える', async () => {
+    const species = findSpeciesById('kakure-kumanomi')!;
+    const outcome = await demoAnswerProvider.answer({ question: 'このあと雨は降りますか', species });
+    expect(outcome).toEqual({ kind: 'answer', answer: 'unknown' });
+  });
+});

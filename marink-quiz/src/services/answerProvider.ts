@@ -28,7 +28,10 @@ export const demoAnswerProvider: AnswerProvider = {
   async answer({ question, species }) {
     // 「考えている」間の自然な待ち時間。判定自体は同期で行う
     await new Promise((resolve) => setTimeout(resolve, DEMO_THINKING_MS));
-    return answerDemoQuestion(question, species);
+    const outcome = answerDemoQuestion(question, species);
+    // 登録データから判断できない質問は「わかりません」とは返さず、「どちらともいえない」で答える
+    if (outcome.kind === 'unsupported') return { kind: 'answer', answer: 'unknown' };
+    return outcome;
   },
 };
 

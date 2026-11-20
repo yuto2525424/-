@@ -82,6 +82,43 @@ const TAXON_RULES: Array<[RegExp, keyof Species['taxa']]> = [
   [/魚/, 'fish'],
 ];
 
+/** 大きな分類群（軟体動物・脊椎動物・硬骨魚など）。登録済みの分類フラグから導く */
+function evaluateGroup(text: string, species: Species): RuleResult {
+  const t = species.taxa;
+  const vertebrate = t.fish === true || t.mammal === true || t.reptile === true;
+  const anyKnown = Object.values(t).some((v) => v === true);
+  if (/無脊椎/.test(text)) {
+    if (vertebrate) return 'no';
+    return anyKnown ? 'yes' : 'unknown';
+  }
+  if (/脊椎/.test(text)) {
+    if (vertebrate) return 'yes';
+    return anyKnown ? 'no' : 'unknown';
+  }
+  if (/軟体/.test(text)) {
+    if (t.bivalve === true || t.cephalopod === true || t.octopus === true || t.squid === true) return 'yes';
+    return anyKnown ? 'no' : 'unknown';
+  }
+  if (/節足/.test(text)) {
+    if (t.crustacean === true) return 'yes';
+    return anyKnown ? 'no' : 'unknown';
+  }
+  if (/硬骨/.test(text)) {
+    if (t.shark === true) return 'no';
+    if (t.fish === true) return 'yes';
+    return vertebrate ? 'no' : 'unknown';
+  }
+  if (/軟骨/.test(text)) {
+    if (t.shark === true) return 'yes';
+    if (t.fish === true) return 'no';
+    return vertebrate ? 'no' : 'unknown';
+  }
+  if (/両生/.test(text)) {
+    return anyKnown ? 'no' : 'unknown';
+  }
+  return 'unsupported';
+}
+
 const COLOR_RULES: Array<[RegExp, ColorKey]> = [
   [/赤|レッド/, 'red'],
   [/オレンジ|橙/, 'orange'],
@@ -222,6 +259,10 @@ const RULES: Rule[] = [
       if (!hit) return 'unsupported';
       return fromBoolean(species.env[hit[1]]);
     },
+  },
+  {
+    test: (t) => /軟体|節足|脊椎|硬骨|軟骨|両生/.test(t),
+    evaluate: ({ text, species }) => evaluateGroup(text, species),
   },
   {
     test: (t) => TAXON_RULES.some(([re]) => re.test(t)) || /貝/.test(t),

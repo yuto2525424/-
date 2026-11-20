@@ -35,7 +35,7 @@ const DIET_TRIGGER = /食べ|食う|食料|食性|餌|エサ|えさ|捕食|食�
 const DIET_PREY: Array<[RegExp, DietKey]> = [
   [/魚|さかな|小魚/, 'fish'],
   [/プランクトン|オキアミ/, 'plankton'],
-  [/海藻|藻|海草|草食|植物/, 'plants'],
+  [/海藻|藻|海草|草食|植物|草/, 'plants'],
   [/クラゲ/, 'jellyfish'],
   [/貝/, 'shellfish'],
   [/エビ|カニ|甲殻/, 'crustacean'],
@@ -66,7 +66,7 @@ const REGION_RULES: Array<[RegExp, string[]]> = [
   [/大西洋/, ['大西洋']],
   [/地中海/, ['地中海']],
 ];
-const HABITAT_VERB = /住|生息|分布|いる|見られ|暮ら|棲|すむ|生き/;
+const HABITAT_VERB = /住|生息|分布|いる|います|にい$|見られ|暮ら|棲|すむ|生き/;
 
 const TAXON_RULES: Array<[RegExp, keyof Species['taxa']]> = [
   [/サメ|軟骨/, 'shark'],
@@ -167,12 +167,13 @@ function evaluateNumeric(text: string, species: Species): RuleResult {
   const value = Number.parseFloat(match[1]);
   const inCm = /cm|センチ/i.test(match[2]);
   const isDepth = /水深|深さ|深い|深く|深海/.test(text);
-  const isSize = /体長|全長|甲長|大きい|大き|長い|長さ|サイズ|小さい|小さ|短い/.test(text);
-  if (isDepth === isSize) return 'unsupported';
+  const isSize = !isDepth;
+  if (isDepth && isSize) return 'unsupported';
+  // 深さの言葉がなければ、体の大きさの質問として扱う
 
   let direction: 'gt' | 'lt';
-  if (/以下|未満|以内|より小|より短|より浅|浅い/.test(text)) direction = 'lt';
-  else if (/以上|超え|超す|より大|より長|より深/.test(text)) direction = 'gt';
+  if (/以下|未満|以内|以浅|より小|より短|より浅|浅い/.test(text)) direction = 'lt';
+  else if (/以上|以深|超え|超す|より大|より長|より深/.test(text)) direction = 'gt';
   else return 'unsupported';
 
   if (isDepth) {
@@ -212,6 +213,26 @@ const RULES: Rule[] = [
   {
     test: (t) => /\d/.test(t) && /cm|センチ|m|メートル/i.test(t),
     evaluate: ({ text, species }) => evaluateNumeric(text, species),
+  },
+  {
+    test: (t) => /深いところ|深い海|深く/.test(t),
+    evaluate: ({ species }) => {
+      const range = species.depthM;
+      if (!range) return 'unknown';
+      if (range.min >= 200) return 'yes';
+      if (range.max < 200) return 'no';
+      return 'unknown';
+    },
+  },
+  {
+    test: (t) => /浅いところ|浅い海|水面近く/.test(t),
+    evaluate: ({ species }) => {
+      const range = species.depthM;
+      if (!range) return 'unknown';
+      if (range.max <= 30) return 'yes';
+      if (range.min > 30) return 'no';
+      return 'unknown';
+    },
   },
   {
     test: (t) => /深海/.test(t),
@@ -258,6 +279,54 @@ const RULES: Rule[] = [
       const hit = ENV_RULES.find(([re]) => re.test(text));
       if (!hit) return 'unsupported';
       return fromBoolean(species.env[hit[1]]);
+    },
+  },
+  {
+    test: (t) => /大きい|大型|小さい|小型|人間より/.test(t),
+    evaluate: ({ text, species }) => {
+      const range = species.sizeCm;
+      if (!range) return 'unknown';
+      if (/人間より/.test(text)) {
+        if (range.min > 170) return 'yes';
+        if (range.max <= 170) return 'no';
+        return 'unknown';
+      }
+      if (/小さい|小型/.test(text)) {
+        if (range.max <= 30) return 'yes';
+        if (range.min > 30) return 'no';
+        return 'unknown';
+      }
+      if (range.min >= 100) return 'yes';
+      if (range.max < 100) return 'no';
+      return 'unknown';
+    },
+  },
+  {
+    test: (t) => /雑食|肉食/.test(t),
+    evaluate: ({ text, species }) => {
+      const d = species.diet;
+      const animal = d.fish === true || d.crustacean === true || d.shellfish === true || d.cephalopod === true || d.echinoderm === true || d.mammal === true || d.jellyfish === true || d.plankton === true;
+      if (/雑食/.test(text)) {
+        if (d.plants === true && animal) return 'yes';
+        if (d.plants === false && animal) return 'no';
+        return 'unknown';
+      }
+      if (d.plants === false && animal) return 'yes';
+      if (d.plants === true) return 'no';
+      return 'unknown';
+    },
+  },
+  {
+    test: (t) => /ひれ/.test(t),
+    evaluate: ({ species }) => fromBoolean(species.taxa.fish),
+  },
+  {
+    test: (t) => /(?<!軟)骨/.test(t),
+    evaluate: ({ species }) => {
+      const t2 = species.taxa;
+      if (t2.shark === true) return 'no';
+      if (t2.fish === true) return 'yes';
+      return 'unknown';
     },
   },
   {

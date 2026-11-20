@@ -138,3 +138,35 @@ describe('大きな分類群の質問（登録データから判断）', () => {
     expect(answerOf('jinbe-zame', '硬骨魚ですか？')).toBe('no');
   });
 });
+
+describe('よく聞かれる質問（大きさ・深さ・食性・体の部分・海域）', () => {
+  it('大きさの質問に答える', () => {
+    expect(answerOf('hojiroza-me', '1メートルを超えますか？')).toBe('yes');
+    expect(answerOf('hojiroza-me', '人間より大きいですか？')).toBe('yes');
+    expect(answerOf('kakure-kumanomi', '大きいですか？')).toBe('no');
+    expect(answerOf('kakure-kumanomi', '小さいですか？')).toBe('yes');
+  });
+
+  it('深さの言い方に答える', () => {
+    expect(answerOf('demeniigisu', '深いところに住みますか？')).toBe('yes');
+    expect(answerOf('kakure-kumanomi', '浅いところに住みますか？')).toBe('yes');
+    expect(answerOf('jinbe-zame', '水面近くにいますか？')).toBe('unknown');
+  });
+
+  it('食性の言い方（草・雑食・肉食）に答える', () => {
+    expect(answerOf('nanyou-hagi', '草を食べますか？')).toBe('yes');
+    expect(answerOf('manbou', '草を食べますか？')).toBe('no');
+    expect(answerOf('kakure-kumanomi', '雑食ですか？')).toBe('yes');
+  });
+
+  it('体の部分（ひれ・骨）に答える', () => {
+    expect(answerOf('kakure-kumanomi', 'ひれはありますか？')).toBe('yes');
+    expect(answerOf('kakure-kumanomi', '骨はありますか？')).toBe('yes');
+    expect(answerOf('jinbe-zame', '骨はありますか？')).toBe('no');
+  });
+
+  it('海域の「いますか」に答える', () => {
+    expect(answerOf('kakure-kumanomi', '太平洋にいますか？')).toBe('yes');
+    expect(answerOf('kakure-kumanomi', '太平洋に住んでいますか？')).toBe('yes');
+  });
+});

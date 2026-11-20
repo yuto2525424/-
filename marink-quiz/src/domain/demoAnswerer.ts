@@ -18,7 +18,7 @@ export type DemoOutcome =
   | { kind: 'refused'; message: string };
 
 export const UNSUPPORTED_MESSAGE =
-  'デモモードでは、この質問を理解できません。「サンゴ礁に住みますか？」「体は赤いですか？」のように、生き物の特徴を短く具体的に聞いてください。（この質問は質問回数に含まれません）';
+  'データが入っていないためわかりません。';
 const REFUSED_MESSAGE = 'その質問には答えられません。生き物の特徴について質問してください。';
 const NAME_IN_QUESTION_MESSAGE =
   '生き物の名前を含む質問には答えられません。名前は「生物名を回答」から予想してください。（この質問は質問回数に含まれません）';

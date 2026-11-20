@@ -260,7 +260,7 @@ const BASE_SPECIES: Species[] = [
     taxa: { fish: true, shark: true, mammal: false, reptile: false, cnidarian: false, octopus: false, squid: false, cephalopod: false, bivalve: false, echinoderm: false, crustacean: false },
     regions: ['太平洋', 'インド洋', '大西洋'],
     habitat: '深い海の中層〜底層。',
-    env: { coralReef: false, coastal: true, openOcean: null, japanWaters: true, tropical: false },
+    env: { coralReef: false, coastal: true, openOcean: false, japanWaters: true, tropical: false },
     depthM: { min: 200, max: 1500 },
     sizeCm: { min: 100, max: 200 },
     sizeNote: '全長の目安です。',

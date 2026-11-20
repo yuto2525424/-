@@ -162,7 +162,7 @@ export const EXTRA_SPECIES: Species[] = [
     taxa: taxa({ fish: true }),
     regions: ['インド太平洋', 'インド洋', '太平洋'],
     habitat: '砂地に穴を掘り、群れで暮らします。',
-    env: { coralReef: null, coastal: true, openOcean: false, japanWaters: true, tropical: true },
+    env: { coralReef: true, coastal: true, openOcean: false, japanWaters: true, tropical: true },
     depthM: { min: 1, max: 25 },
     sizeCm: { min: 30, max: 60 },
     sizeNote: '体長の目安です。',

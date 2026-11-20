@@ -16,6 +16,7 @@ import { applyResultToStats, applyResultToZukan, EMPTY_STATS, type Stats, type Z
 import { findSpeciesById, pickSpecies } from '../domain/species';
 import type { Difficulty } from '../types';
 import { getAnswerProvider } from '../services/answerProvider';
+import { applyRemote, askRemote, createRemoteSession, giveUpRemote, guessRemote, JUDGE_URL } from '../services/judgeClient';
 import { haptic, playSound } from '../feedback/feedback';
 import {
   DEFAULT_SETTINGS,
@@ -164,6 +165,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const startGame = useCallback(
     (difficulty?: Difficulty) => {
+      if (JUDGE_URL) {
+        const chosenRemote = difficulty ?? latest.current.settings.difficulty;
+        const placeholder = createGame({ id: newGameId(), difficulty: chosenRemote, speciesId: '', now: Date.now() });
+        update((d) => ({ ...d, game: { ...placeholder, pending: true, notice: '準備しています…' }, settings: { ...d.settings, difficulty: chosenRemote } }));
+        void saveSettings({ ...latest.current.settings });
+        createRemoteSession(chosenRemote)
+          .then(({ sessionId, state }) => {
+            const game = applyRemote({ ...placeholder, remoteSessionId: sessionId }, state);
+            update((d) => ({ ...d, game }));
+            void saveGame(game);
+          })
+          .catch(() => {
+            update((d) => ({ ...d, game: { ...placeholder, pending: false, notice: '判定サーバーに接続できませんでした。通信状態を確認して、ホームから遊び直してください。' } }));
+          });
+        return;
+      }
       const chosen = difficulty ?? latest.current.settings.difficulty;
       const species = pickSpecies(chosen);
       const game = createGame({ id: newGameId(), difficulty: chosen, speciesId: species.id, now: Date.now() });
@@ -183,6 +200,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
     async (text: string): Promise<boolean> => {
       const current = latest.current.game;
       if (!current) return false;
+      if (JUDGE_URL) {
+        const q = text.trim();
+        if (!current.remoteSessionId) {
+          commitGame(current, { ...current, notice: 'セッションがありません。ホームから遊び直してください。' });
+          return false;
+        }
+        if (q.length === 0 || q.length > MAX_QUESTION_LENGTH || current.pending) {
+          if (!current.pending) commitGame(current, { ...current, notice: q.length === 0 ? '質問を入力してください。' : `質問は${MAX_QUESTION_LENGTH}文字以内で入力してください。` });
+          return false;
+        }
+        commitGame(current, { ...current, pending: true, notice: null });
+        try {
+          const { state } = await askRemote(current.remoteSessionId, q);
+          const now = latest.current.game;
+          if (!now || now.id !== current.id) return false;
+          const answered = state.questions.length > current.questions.length;
+          commitGame(now, applyRemote(now, state));
+          feedback(answered ? 'tap' : 'light');
+          return answered;
+        } catch {
+          const now = latest.current.game;
+          if (now && now.id === current.id) {
+            commitGame(now, { ...now, pending: false, notice: '通信できませんでした。通信状態を確認して、もう一度お試しください。' });
+            feedback('error');
+          }
+          return false;
+        }
+      }
       const question = text.trim();
       if (question.length === 0) {
         commitGame(current, { ...current, notice: '質問を入力してください。' });
@@ -231,6 +276,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
     (text: string) => {
       const current = latest.current.game;
       if (!current) return;
+      if (JUDGE_URL) {
+        if (!current.remoteSessionId || current.pending) return;
+        void guessRemote(current.remoteSessionId, text)
+          .then(({ state }) => {
+            const now = latest.current.game;
+            if (!now || now.id !== current.id) return;
+            const next = applyRemote(now, state);
+            const wrongMid = next.phase === 'asking' && next.guesses.length > now.guesses.length;
+            commitGame(now, next);
+            if (wrongMid) feedback('wrong');
+          })
+          .catch(() => {
+            const now = latest.current.game;
+            if (now && now.id === current.id) commitGame(now, { ...now, notice: '通信できませんでした。もう一度お試しください。' });
+          });
+        return;
+      }
       const species = findSpeciesById(current.speciesId);
       if (!species) return;
       const next = submitGuessToGame(current, text, species, Date.now());
@@ -245,6 +307,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const giveUp = useCallback(() => {
     const current = latest.current.game;
     if (!current) return;
+    if (JUDGE_URL) {
+      if (!current.remoteSessionId) return;
+      void giveUpRemote(current.remoteSessionId)
+        .then(({ state }) => {
+          const now = latest.current.game;
+          if (!now || now.id !== current.id) return;
+          commitGame(now, applyRemote(now, state));
+        })
+        .catch(() => undefined);
+      return;
+    }
     commitGame(current, giveUpGame(current, Date.now()));
   }, [commitGame]);
 
@@ -268,7 +341,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const value = useMemo<AppContextValue>(
     () => ({
       ...data,
-      answerModeLabel: provider.label,
+      answerModeLabel: JUDGE_URL ? 'AI判定（判定サーバー接続）' : provider.label,
       startGame,
       discardGame,
       askQuestion,

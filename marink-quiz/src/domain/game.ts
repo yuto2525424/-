@@ -44,6 +44,8 @@ export interface GameState {
   pending: boolean;
   /** 直近の案内メッセージ（未対応、通信エラー、予想ミスなど） */
   notice: string | null;
+  /** 判定サーバーを使う場合のセッションID（正解はサーバーが保持する） */
+  remoteSessionId?: string;
 }
 
 export function createGame(params: {

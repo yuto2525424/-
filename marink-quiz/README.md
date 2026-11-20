@@ -100,3 +100,13 @@ scripts/make-sounds.mjs 効果音の生成
 ## 現在の状態
 
 詳しい実装状況・未実装項目・外部サービスと料金・App Store 公開手順は、リポジトリの報告書を参照してください。
+
+## 判定サーバー（スマホでAI判定を使う場合）
+
+登録にない自由な質問を AI が判定するには、判定サーバーを外部から届く場所に置き、アプリにその URL を教えます。API キーは判定サーバー側だけに置き、アプリには含めません。
+
+1. 判定サーバーを配置する（Dockerfile あり。`ANTHROPIC_API_KEY` と `ALLOWED_ORIGIN`（アプリを配信する URL）、必要なら `AI_CALLS_PER_DAY` を環境変数で設定）
+2. Web版のビルド時に `EXPO_PUBLIC_JUDGE_URL=https://（配置したURL）` を指定する
+3. 配置先が使えない場合、アプリは従来どおり端末内の情報だけで遊べます
+
+ローカルで試す場合：`ANTHROPIC_API_KEY=... npm run judge`（既定は http://localhost:8787）

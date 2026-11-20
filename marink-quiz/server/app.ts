@@ -77,6 +77,8 @@ function publicState(game: GameState) {
     questions: game.questions,
     guesses: game.guesses.map((g) => ({ text: g.text, correct: g.correct, phase: g.phase })),
     finished: isFinished(game),
+    endReason: game.endReason,
+    endedAt: game.endedAt,
     // 正解は終了したときだけ返す
     revealedSpeciesId: selectRevealedSpeciesId(game),
   };

@@ -170,7 +170,7 @@ export const EXTRA_SPECIES: Species[] = [
     colorVaries: false,
     diet: { plankton: true },
     dietSummary: '海中を流れてくるプランクトンなどを捕らえて食べます。',
-    features: { ...NO_FEATURES },
+    features: { ...NO_FEATURES, maleCaresEggs: false },
     ecology: '砂から体の前半分を出し、海流に向かって揺れながらエサを待ちます。危険を感じると、すぐに砂の中の穴に隠れます。',
     trivia: '砂から顔をのぞかせて揺れる姿が人気で、水族館の人気者になっています。',
     specialAbility: '砂の穴に隠れる素早さ。群れで揺れる姿。',

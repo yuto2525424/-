@@ -52,7 +52,7 @@ const BASE_SPECIES: Species[] = [
     taxa: { fish: true, shark: true, mammal: false, reptile: false, cnidarian: false, octopus: false, squid: false, cephalopod: false, bivalve: false, echinoderm: false, crustacean: false },
     regions: ['太平洋', 'インド洋', '大西洋'],
     habitat: '熱帯・亜熱帯の外洋が中心ですが、沿岸にも来ます。',
-    env: { coralReef: null, coastal: true, openOcean: true, japanWaters: true, tropical: true },
+    env: { coralReef: true, coastal: true, openOcean: true, japanWaters: true, tropical: true },
     depthM: { min: 0, max: 1900 },
     sizeCm: { min: 400, max: 1200 },
     sizeNote: '成体の一般的な範囲。記録では18m級の報告もあります。',

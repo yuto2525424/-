@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, type StyleProp, type ViewStyle } from 'react-native';
 import { colors, minTouch, radius } from '../theme/theme';
+import { pressFeedback } from '../feedback/feedback';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
@@ -21,7 +22,10 @@ export function Button({ label, onPress, variant = 'primary', disabled = false, 
       accessibilityHint={hint}
       accessibilityState={{ disabled }}
       disabled={disabled}
-      onPress={onPress}
+      onPress={() => {
+        if (!disabled) pressFeedback();
+        onPress();
+      }}
       style={({ pressed }) => [
         styles.base,
         { backgroundColor: palette.bg, borderColor: palette.border },

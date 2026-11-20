@@ -17,7 +17,7 @@ import { findSpeciesById, pickSpecies } from '../domain/species';
 import type { Difficulty } from '../types';
 import { getAnswerProvider } from '../services/answerProvider';
 import { applyRemote, askRemote, createRemoteSession, giveUpRemote, guessRemote, JUDGE_URL } from '../services/judgeClient';
-import { haptic, playSound } from '../feedback/feedback';
+import { configureFeedback, haptic, playSound, startBgm } from '../feedback/feedback';
 import {
   DEFAULT_SETTINGS,
   loadSnapshot,
@@ -103,6 +103,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         settings: snapshot.settings,
         game: snapshot.savedGame,
       }));
+      configureFeedback(snapshot.settings);
     });
     return () => {
       cancelled = true;
@@ -110,13 +111,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [update]);
 
   const feedback = useCallback((kind: 'tap' | 'correct' | 'wrong' | 'light' | 'success' | 'error') => {
-    const { soundEnabled, hapticsEnabled } = latest.current.settings;
     if (kind === 'tap' || kind === 'correct' || kind === 'wrong') {
-      void playSound(kind, soundEnabled);
+      void playSound(kind);
+    } else {
+      void haptic(kind);
     }
-    if (kind === 'light') void haptic('light', hapticsEnabled);
-    if (kind === 'success') void haptic('success', hapticsEnabled);
-    if (kind === 'error') void haptic('error', hapticsEnabled);
   }, []);
 
   /** ゲーム状態を反映し、保存する。終了した場合は成績と図鑑も更新する */
@@ -170,6 +169,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const placeholder = createGame({ id: newGameId(), difficulty: chosenRemote, speciesId: '', now: Date.now() });
         update((d) => ({ ...d, game: { ...placeholder, pending: true, notice: '準備しています…' }, settings: { ...d.settings, difficulty: chosenRemote } }));
         void saveSettings({ ...latest.current.settings });
+        void startBgm();
         createRemoteSession(chosenRemote)
           .then(({ sessionId, state }) => {
             const game = applyRemote({ ...placeholder, remoteSessionId: sessionId }, state);
@@ -187,6 +187,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       update((d) => ({ ...d, game, settings: { ...d.settings, difficulty: chosen } }));
       void saveGame(game);
       void saveSettings({ ...latest.current.settings });
+      void startBgm();
     },
     [update],
   );
@@ -324,6 +325,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const updateSettings = useCallback(
     (patch: Partial<Settings>) => {
       const next = update((d) => ({ ...d, settings: { ...d.settings, ...patch } })).settings;
+      configureFeedback(next);
       void saveSettings(next);
     },
     [update],

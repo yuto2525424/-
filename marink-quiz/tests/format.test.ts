@@ -11,7 +11,7 @@ describe('表示用の整形', () => {
   });
 
   it('体色の変化がある生き物は注記を付ける', () => {
-    expect(formatColors(findSpeciesById('madako')!)).toContain('変化');
+    expect(formatColors(findSpeciesById('hirame')!)).toContain('変化');
     expect(formatColors(findSpeciesById('kakure-kumanomi')!)).toBe('オレンジ・白・黒');
   });
 });

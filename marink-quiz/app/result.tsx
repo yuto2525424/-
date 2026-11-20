@@ -3,6 +3,7 @@ import { Animated, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { Button } from '../src/components/Button';
 import { Card } from '../src/components/Card';
+import { Burst, Shake } from '../src/components/Effects';
 import { QuestionLog } from '../src/components/QuestionLog';
 import { Screen } from '../src/components/Screen';
 import { SpeciesPlaceholder } from '../src/components/SpeciesPlaceholder';
@@ -59,9 +60,11 @@ export default function ResultScreen() {
     <Screen>
       <ScrollView contentContainerStyle={styles.content}>
         <Animated.View style={[styles.hero, { opacity: reveal, transform: [{ scale }] }]}>
-          <Text style={[styles.outcome, { color: won ? colors.success : colors.danger }]} accessibilityRole="header">
-            {outcomeTitle}
-          </Text>
+          <Shake trigger={won ? 0 : 1}>
+            <Text style={[styles.outcome, { color: won ? colors.success : colors.danger }]} accessibilityRole="header">
+              {outcomeTitle}
+            </Text>
+          </Shake>
           <Text style={styles.speciesName}>{species.nameJa}</Text>
           <Text style={styles.outcomeSub}>{outcomeSub}</Text>
         </Animated.View>
@@ -114,6 +117,7 @@ export default function ResultScreen() {
           <Button label="ホームへ" variant="ghost" onPress={toHome} />
         </View>
       </ScrollView>
+      {won ? <Burst trigger={lastResult.gameId.length} count={40} /> : null}
     </Screen>
   );
 }

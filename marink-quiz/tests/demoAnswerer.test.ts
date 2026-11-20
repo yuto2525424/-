@@ -30,16 +30,15 @@ describe('デモモードの3択回答', () => {
   it('サメは魚類に含まれ、哺乳類ではない（分類の正確性）', () => {
     expect(answerOf('jinbe-zame', '魚ですか？')).toBe('yes');
     expect(answerOf('jinbe-zame', 'サメの仲間ですか？')).toBe('yes');
-    expect(answerOf('shachi', '哺乳類ですか？')).toBe('yes');
-    expect(answerOf('shachi', '魚ですか？')).toBe('no');
-    expect(answerOf('aoumigame', '爬虫類ですか？')).toBe('yes');
+
+    expect(answerOf('kakure-kumanomi', '哺乳類ですか？')).toBe('no');
   });
 
   it('数値の比較は範囲の外側だけ断定し、境界付近は「どちらともいえない」', () => {
     expect(answerOf('jinbe-zame', '体長は1mより大きいですか？')).toBe('yes');
     expect(answerOf('kakure-kumanomi', '体長は1mより大きいですか？')).toBe('no');
     expect(answerOf('kakure-kumanomi', '体長は10cmより大きいですか？')).toBe('unknown');
-    expect(answerOf('daiou-ika', '水深200mより深いところにいますか？')).toBe('yes');
+    expect(answerOf('demeniigisu', '水深200mより深いところにいますか？')).toBe('yes');
     expect(answerOf('jinbe-zame', '水深200mより深いところにいますか？')).toBe('unknown');
   });
 
@@ -50,20 +49,20 @@ describe('デモモードの3択回答', () => {
   });
 
   it('食性は具体的な餌で判定し、食べ物の種類が不明なら未対応', () => {
-    expect(answerOf('handou-iruka', '魚を食べますか？')).toBe('yes');
-    expect(answerOf('oniohitode', 'サンゴを食べますか？')).toBe('yes');
-    expect(answerOf('aoumigame', '草食ですか？')).toBe('yes');
+    expect(answerOf('jinbe-zame', '魚を食べますか？')).toBe('yes');
+
+
     expect(answerOf('manbou', 'クラゲを食べますか？')).toBe('yes');
     // 登録のない食性は断定しない
     expect(answerOf('kakure-kumanomi', '魚を食べますか？')).toBe('unknown');
-    expect(answerDemoQuestion('何を食べますか？', sp('madako')).kind).toBe('unsupported');
+    expect(answerDemoQuestion('何を食べますか？', sp('kakure-kumanomi')).kind).toBe('unsupported');
   });
 
   it('体色は環境で変わる生き物を断定しない', () => {
-    expect(answerOf('madako', '体は茶色ですか？')).toBe('yes');
-    expect(answerOf('madako', '体は赤いですか？')).toBe('unknown');
+    expect(answerOf('hirame', '体は茶色ですか？')).toBe('yes');
+    expect(answerOf('hirame', '体は赤いですか？')).toBe('unknown');
     expect(answerOf('jinbe-zame', '白い斑点がありますか？')).toBe('yes');
-    expect(answerOf('mizu-kurage', '体は透明ですか？')).toBe('yes');
+    expect(answerOf('demeniigisu', '体は透明ですか？')).toBe('yes');
   });
 
   it('オスが卵や子を世話するかを判定（タツノオトシゴ）', () => {
@@ -71,11 +70,11 @@ describe('デモモードの3択回答', () => {
   });
 
   it('毒・とげ・殻・肺呼吸を判定する', () => {
-    expect(answerOf('daiou-ika', '毒はありますか？')).toBe('no');
-    expect(answerOf('hyoumon-dako', '毒はありますか？')).toBe('yes');
+    expect(answerOf('kakure-kumanomi', '毒はありますか？')).toBe('no');
+    expect(answerOf('hanamino-kasago', '毒はありますか？')).toBe('yes');
     expect(answerOf('harisenbon', 'とげはありますか？')).toBe('yes');
-    expect(answerOf('oo-shakogai', '殻はありますか？')).toBe('yes');
-    expect(answerOf('shachi', '肺で呼吸しますか？')).toBe('yes');
+
+    expect(answerOf('kakure-kumanomi', '肺で呼吸しますか？')).toBe('no');
   });
 
   it('主観的な質問は「どちらともいえない」', () => {
@@ -114,7 +113,7 @@ describe('デモモードの未対応・拒否', () => {
   });
 
   it('未対応・拒否の文面に正解の生き物名を含めない', () => {
-    const target = sp('daiou-ika');
+    const target = sp('kakure-kumanomi');
     const samples = ['このあと雨は降りますか？', '正解は？', 'あいうえお', '体は大きいですか？'];
     for (const q of samples) {
       const outcome = answerDemoQuestion(q, target);
@@ -127,11 +126,10 @@ describe('デモモードの未対応・拒否', () => {
 
 describe('大きな分類群の質問（登録データから判断）', () => {
   it('軟体動物・脊椎動物・無脊椎動物を判定する', () => {
-    expect(answerOf('madako', '軟体動物ですか？')).toBe('yes');
-    expect(answerOf('shachi', '軟体動物ですか？')).toBe('no');
-    expect(answerOf('shachi', '脊椎動物ですか？')).toBe('yes');
-    expect(answerOf('oniohitode', '無脊椎動物ですか？')).toBe('yes');
-    expect(answerOf('shachi', '無脊椎動物ですか？')).toBe('no');
+    expect(answerOf('kakure-kumanomi', '軟体動物ですか？')).toBe('no');
+    expect(answerOf('kakure-kumanomi', '脊椎動物ですか？')).toBe('yes');
+    expect(answerOf('kakure-kumanomi', '無脊椎動物ですか？')).toBe('no');
+    expect(answerOf('jinbe-zame', '脊椎動物ですか？')).toBe('yes');
   });
 
   it('硬骨魚と軟骨魚を区別する', () => {

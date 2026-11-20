@@ -6,6 +6,7 @@ import { AnswerBubble } from '../src/components/AnswerBubble';
 import { Button } from '../src/components/Button';
 import { MysteryCreature } from '../src/components/MysteryCreature';
 import { ProgressDots } from '../src/components/ProgressDots';
+import { Pop, Shake } from '../src/components/Effects';
 import { Screen } from '../src/components/Screen';
 import { GuessModal, HistoryModal } from '../src/components/GameModals';
 import { useApp } from '../src/state/AppProvider';
@@ -89,12 +90,16 @@ export default function GameScreen() {
         </View>
 
         <View style={styles.center}>
-          <MysteryCreature remaining={remaining} finalPhase={finalPhase} />
-          <AnswerBubble
-            pending={game.pending}
-            question={lastQuestion?.question ?? null}
-            answer={lastQuestion?.answer ?? null}
-          />
+          <Shake trigger={game.midMistakes}>
+            <MysteryCreature remaining={remaining} finalPhase={finalPhase} />
+          </Shake>
+          <Pop trigger={game.questions.length}>
+            <AnswerBubble
+              pending={game.pending}
+              question={lastQuestion?.question ?? null}
+              answer={lastQuestion?.answer ?? null}
+            />
+          </Pop>
           {game.notice ? (
             <Text style={styles.notice} accessibilityLiveRegion="polite">
               {game.notice}

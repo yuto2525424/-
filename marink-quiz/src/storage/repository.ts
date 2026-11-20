@@ -7,12 +7,14 @@ import { readJson, removeKey, writeJson } from './keyValue';
 export interface Settings {
   soundEnabled: boolean;
   hapticsEnabled: boolean;
+  bgmEnabled: boolean;
   difficulty: Difficulty;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
   soundEnabled: true,
   hapticsEnabled: true,
+  bgmEnabled: true,
   difficulty: 'beginner',
 };
 
@@ -58,6 +60,7 @@ export async function loadSnapshot(): Promise<Snapshot> {
   const settings: Settings = {
     soundEnabled: typeof settingsRaw.soundEnabled === 'boolean' ? settingsRaw.soundEnabled : DEFAULT_SETTINGS.soundEnabled,
     hapticsEnabled: typeof settingsRaw.hapticsEnabled === 'boolean' ? settingsRaw.hapticsEnabled : DEFAULT_SETTINGS.hapticsEnabled,
+    bgmEnabled: typeof settingsRaw.bgmEnabled === 'boolean' ? settingsRaw.bgmEnabled : DEFAULT_SETTINGS.bgmEnabled,
     difficulty: isDifficulty(settingsRaw.difficulty) ? settingsRaw.difficulty : DEFAULT_SETTINGS.difficulty,
   };
 

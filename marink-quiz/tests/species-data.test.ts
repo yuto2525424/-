@@ -4,8 +4,9 @@ import { DIFFICULTIES, speciesByDifficulty } from '../src/domain/species';
 import { normalizeText } from '../src/domain/normalize';
 
 describe('海洋生物データベース', () => {
-  it('50種が登録されている', () => {
-    expect(SPECIES.length).toBe(50);
+  it('魚類のみが登録されている', () => {
+    expect(SPECIES.every((s) => s.taxa.fish === true)).toBe(true);
+    expect(SPECIES.length).toBeGreaterThanOrEqual(20);
   });
 
   it('id と正式名が重複しない', () => {

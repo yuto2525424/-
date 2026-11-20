@@ -2,10 +2,23 @@ import { setAudioModeAsync, createAudioPlayer, type AudioPlayer } from 'expo-aud
 import * as Haptics from 'expo-haptics';
 
 /**
- * 効果音と触覚フィードバック。
- * 設定（オン・オフ）は呼び出し側で渡す。失敗しても操作は止めない。
+ * 効果音・触覚・BGM。
+ * 設定は configureFeedback で渡す。どの呼び出しも失敗しても操作は止めない。
  */
 export type SoundName = 'tap' | 'correct' | 'wrong';
+
+interface FeedbackConfig {
+  soundEnabled: boolean;
+  hapticsEnabled: boolean;
+  bgmEnabled: boolean;
+}
+
+let config: FeedbackConfig = { soundEnabled: true, hapticsEnabled: true, bgmEnabled: true };
+
+export function configureFeedback(next: FeedbackConfig): void {
+  config = next;
+  if (!next.bgmEnabled) void stopBgm();
+}
 
 const SOURCES: Record<SoundName, number> = {
   tap: require('../../assets/sounds/tap.wav'),
@@ -14,16 +27,8 @@ const SOURCES: Record<SoundName, number> = {
 };
 
 const players: Partial<Record<SoundName, AudioPlayer>> = {};
+let bgmPlayer: AudioPlayer | null = null;
 let audioReady = false;
-
-function getPlayer(name: SoundName): AudioPlayer {
-  let player = players[name];
-  if (!player) {
-    player = createAudioPlayer(SOURCES[name]);
-    players[name] = player;
-  }
-  return player;
-}
 
 async function ensureAudioMode(): Promise<void> {
   if (audioReady) return;
@@ -35,8 +40,17 @@ async function ensureAudioMode(): Promise<void> {
   }
 }
 
-export async function playSound(name: SoundName, enabled: boolean): Promise<void> {
-  if (!enabled) return;
+function getPlayer(name: SoundName): AudioPlayer {
+  let player = players[name];
+  if (!player) {
+    player = createAudioPlayer(SOURCES[name]);
+    players[name] = player;
+  }
+  return player;
+}
+
+export async function playSound(name: SoundName): Promise<void> {
+  if (!config.soundEnabled) return;
   try {
     await ensureAudioMode();
     const player = getPlayer(name);
@@ -47,19 +61,58 @@ export async function playSound(name: SoundName, enabled: boolean): Promise<void
   }
 }
 
-export type HapticKind = 'light' | 'success' | 'error';
-
-export async function haptic(kind: HapticKind, enabled: boolean): Promise<void> {
-  if (!enabled) return;
+/** BGMを始める（ブラウザでは最初の操作の後でないと鳴らないため、操作の中から呼ぶ） */
+export async function startBgm(): Promise<void> {
+  if (!config.bgmEnabled) return;
   try {
-    if (kind === 'light') {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } else if (kind === 'success') {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } else {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    await ensureAudioMode();
+    if (!bgmPlayer) {
+      bgmPlayer = createAudioPlayer(require('../../assets/sounds/bgm-mystic.wav'));
+      bgmPlayer.loop = true;
+      bgmPlayer.volume = 0.32;
     }
+    if (!bgmPlayer.playing) bgmPlayer.play();
+  } catch {
+    // 再生できない環境では無音
+  }
+}
+
+export async function stopBgm(): Promise<void> {
+  try {
+    bgmPlayer?.pause();
+  } catch {
+    // 無視
+  }
+}
+
+export type HapticKind = 'light' | 'medium' | 'success' | 'error';
+
+export async function haptic(kind: HapticKind): Promise<void> {
+  if (!config.hapticsEnabled) return;
+  try {
+    if (kind === 'light') await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    else if (kind === 'medium') await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    else if (kind === 'success') await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    else await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
   } catch {
     // シミュレータや非対応端末では何もしない
   }
+}
+
+/** ボタンを押したときの手応え（短い音と振動） */
+export function pressFeedback(): void {
+  void haptic('light');
+  void playSound('tap');
+}
+
+/** 正解・勝利の演出（音と強い振動） */
+export function celebrate(): void {
+  void playSound('correct');
+  void haptic('success');
+}
+
+/** 不正解・ゲームオーバーの演出 */
+export function disappoint(): void {
+  void playSound('wrong');
+  void haptic('error');
 }

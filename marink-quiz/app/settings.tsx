@@ -28,6 +28,12 @@ export default function SettingsScreen() {
             onChange={(v) => updateSettings({ soundEnabled: v })}
           />
           <Toggle
+            label="BGM（幻想的な音楽）"
+            hint="ゲーム中に流れる環境音楽です"
+            value={settings.bgmEnabled}
+            onChange={(v) => updateSettings({ bgmEnabled: v })}
+          />
+          <Toggle
             label="触覚フィードバック"
             hint="回答や結果で振動します"
             value={settings.hapticsEnabled}

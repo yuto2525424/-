@@ -136,7 +136,7 @@ export const EXTRA_SPECIES: Species[] = [
     taxa: taxa({ fish: true }),
     regions: ['インド太平洋', 'インド洋', '太平洋'],
     habitat: 'サンゴ礁の外側の斜面や礁湖（ラグーン）。',
-    env: { coralReef: true, coastal: true, openOcean: false, japanWaters: null, tropical: true },
+    env: { coralReef: true, coastal: true, openOcean: false, japanWaters: true, tropical: true },
     depthM: { min: 1, max: 100 },
     sizeCm: { min: 100, max: 200 },
     sizeNote: '全長の目安です。大型の個体では2m近いとされます。',

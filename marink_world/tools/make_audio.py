@@ -74,6 +74,15 @@ def bubble(amp: float) -> np.ndarray:
     return amp * np.sin(ph) * np.exp(-t * 32.0)
 
 
+def kick(amp: float) -> np.ndarray:
+    dur = 0.25
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    f = 110.0 * np.exp(-t * 14.0) + 45.0
+    ph = 2 * np.pi * np.cumsum(f) / SR
+    return amp * np.sin(ph) * np.exp(-t * 16.0)
+
+
 def click(amp: float) -> np.ndarray:
     n = int(0.05 * SR)
     t = np.arange(n) / SR
@@ -106,7 +115,7 @@ def main() -> None:
     for start, end, notes in chords:
         dur = end - start + 1.6
         for n in notes:
-            add(buf, start, pad(midi(n), dur, 0.030, 1.2, 1.4))
+            add(buf, start, pad(midi(n), dur, 0.045, 1.2, 1.4))
             add(buf, start, pad(midi(n + 12), dur, 0.012, 1.6, 1.4))
         add(buf, start, bell(midi(notes[-1] + 12), 0.10))
 
@@ -117,6 +126,20 @@ def main() -> None:
     env[(t_axis >= 12.0) & (t_axis < 16.0)] = 0.85
     env[t_axis < 3.0] = 0.5
     buf += 0.05 * water * env
+
+    # --- 冒頭のインパクト（0秒）：低音の衝撃＋シンバル風のノイズ＋きらめき
+    n_imp = int(0.9 * SR)
+    ti = np.arange(n_imp) / SR
+    sweep = np.sin(2 * np.pi * np.cumsum(np.linspace(140.0, 35.0, n_imp)) / SR) * np.exp(-ti * 4.5)
+    add(buf, 0.0, 0.75 * sweep)
+    crash = rng.standard_normal(int(1.2 * SR))
+    crash = np.diff(crash, prepend=0.0) * np.exp(-np.arange(len(crash)) / SR * 3.0)
+    add(buf, 0.0, 0.22 * crash)
+    add(buf, 0.35, bell(1568.0, 0.12))
+
+    # --- ビート（0.5秒ごとのキック）：3秒から32秒まで、画面の動きに合わせて鼓動を作る
+    for k in range(int((32.0 - 3.2) / 0.5) + 1):
+        add(buf, 3.2 + k * 0.5, kick(0.16))
 
     # --- 場面の切り替えのスウィッシュ
     for at in (12.0, 16.0, 20.0, 25.0):

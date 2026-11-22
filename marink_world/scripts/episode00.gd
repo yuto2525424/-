@@ -25,6 +25,7 @@ var ui: CanvasLayer
 var tint_rect: ColorRect
 var shade_rect: ColorRect
 var fade_rect: ColorRect
+var flash_rect: ColorRect
 var captions: Array = []
 var cards: Array = []
 var pops: Array = []     # {node, base, start, dur}: 伸びる・出現するノード
@@ -132,7 +133,8 @@ func _build_environment() -> void:
 
 func _build_camera_track() -> void:
 	# S1 導入（0〜3秒）：上空から海へ近づく
-	track.add(0.0, Vector3(0.0, 55.0, 70.0), Vector3(0.0, 0.0, -8.0), 55.0)
+	track.add(0.0, Vector3(0.0, 4.0, 24.0), Vector3(0.0, -0.5, -6.0), 50.0)
+	track.add(1.1, Vector3(0.0, 20.0, 40.0), Vector3(0.0, -1.0, -6.0), 55.0)
 	track.add(3.0, Vector3(0.0, 28.0, 46.0), Vector3(0.0, -1.0, -8.0), 55.0)
 	# S2 企画紹介（3〜7秒）：海面近くまで降りる。遠方に島
 	track.add(7.0, Vector3(0.0, 6.0, 30.0), Vector3(0.0, 0.5, -20.0), 55.0)
@@ -478,7 +480,8 @@ func _build_ui() -> void:
 	shade_rect = _full_rect(Color(0.02, 0.06, 0.12, 0.0))
 
 	# S1 導入（0〜3秒）
-	_caption("この海の未来、\nあなたが決める。", 0.2, 3.0, 640.0, 84)
+	_caption("この海の未来、\nあなたが決める。", 0.0, 3.0, 640.0, 96, Color.WHITE, 0.12, true)
+	_card("投票でシリーズが決まる", 0.4, 3.0, 380.0, Color(1.0, 0.4, 0.35), 40, 640.0)
 	# S2 企画紹介（3〜7秒）
 	_caption("MARINK WORLD", 3.2, 7.1, 540.0, 128, Color(1.0, 0.96, 0.75))
 	_caption("第0話｜はじまりの選択", 3.5, 7.1, 720.0, 60)
@@ -509,6 +512,7 @@ func _build_ui() -> void:
 	_caption("MARINK", 36.4, 38.0, 920.0, 150, Color(1.0, 0.96, 0.75))
 	_caption("海の生き物を、もっと面白く。", 36.6, 38.0, 1110.0, 46)
 
+	flash_rect = _full_rect(Color(1.0, 1.0, 1.0, 0.0))
 	fade_rect = _full_rect(Color(0.0, 0.0, 0.0, 1.0))
 
 
@@ -521,7 +525,7 @@ func _full_rect(c: Color) -> ColorRect:
 	return r
 
 
-func _caption(text: String, t0: float, t1: float, y: float, fsize: int, col: Color = Color.WHITE, fade: float = 0.35) -> void:
+func _caption(text: String, t0: float, t1: float, y: float, fsize: int, col: Color = Color.WHITE, fade: float = 0.35, punch: bool = false) -> void:
 	var l := Label.new()
 	l.text = text
 	l.position = Vector2(40.0, y)
@@ -533,7 +537,7 @@ func _caption(text: String, t0: float, t1: float, y: float, fsize: int, col: Col
 	l.add_theme_constant_override("outline_size", int(fsize * 0.22))
 	l.modulate.a = 0.0
 	ui.add_child(l)
-	captions.append({"node": l, "t0": t0, "t1": t1, "y": y, "fade": fade})
+	captions.append({"node": l, "t0": t0, "t1": t1, "y": y, "fade": fade, "punch": punch})
 
 
 func _card(text: String, t0: float, t1: float, y: float, accent: Color, fsize: int = 56, width: float = 900.0) -> void:
@@ -568,6 +572,10 @@ func _update_captions() -> void:
 		var a := _win(t, float(c["t0"]), float(c["t1"]), float(c["fade"]))
 		node.modulate.a = a
 		node.position.y = float(c["y"]) + (1.0 - a) * 24.0
+		if c.get("punch", false):
+			node.pivot_offset = node.size * 0.5
+			var pk := _ease_out(clampf((t - float(c["t0"])) / 0.3, 0.0, 1.0))
+			node.scale = Vector2.ONE * (1.0 + 0.4 * (1.0 - pk))
 	for c in cards:
 		var node2: Control = c["node"]
 		var a2 := _win(t, float(c["t0"]), float(c["t1"]), float(c["fade"]))
@@ -579,6 +587,7 @@ func _update_overlays() -> void:
 	var s := maxf(maxf(_win(t, 3.0, 7.1, 0.5), _win(t, 25.0, 32.0, 0.5)), _win(t, 32.0, 38.0, 0.5))
 	shade_rect.color.a = 0.32 * s
 	fade_rect.color.a = _fade_alpha(t)
+	flash_rect.color.a = 0.85 * clampf(1.0 - t / 0.22, 0.0, 1.0)
 
 
 ## 区間 [a, b] の中で a→a+fade でフェードイン、b-fade→b でフェードアウトする値（0〜1）
@@ -591,8 +600,6 @@ func _win(x: float, a: float, b: float, fade: float) -> float:
 ## 冒頭のフェードイン、場面切り替えの暗転、終わりのフェードアウト
 func _fade_alpha(x: float) -> float:
 	var a := 0.0
-	if x < 0.5:
-		a = maxf(a, 1.0 - x / 0.5)
 	for b in CUT_TIMES:
 		var d := absf(x - float(b))
 		if d < 0.18:

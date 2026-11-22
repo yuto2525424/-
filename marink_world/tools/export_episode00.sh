@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# MARINK WORLD EPISODE 00 の書き出し。
+# MARINK WORLD EPISODE 00 の書き出し（38秒）。
 #   1) Godot の Movie Maker で映像（AVI）を書き出す（仮想ディスプレイ上で実行）
 #   2) ffmpeg で音声を合成し、Instagram リール向けの MP4（H.264 / AAC）にする
 #

@@ -3,7 +3,8 @@ extends Node3D
 ## 経過時間 t を進めながら、カメラ・3D世界・字幕・効果をすべて t から計算する。
 ## Movie Maker は --fixed-fps で delta を固定するため、書き出しと再生で同じ映像になる。
 
-const END_TIME := 38.0
+const END_TIME := 38.0            # 演出の基準時間（story 時刻）
+const STORY_RATE := 1.0            # 実時間と演出時間を一致させる（38秒）
 const SEA_POS := Vector3(-12.0, 0.0, 0.0)
 const AQUA_POS := Vector3(0.0, 0.0, 0.0)
 const RES_POS := Vector3(12.0, 0.0, 0.0)
@@ -65,7 +66,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	t += delta
+	t += delta * STORY_RATE
 	if t >= END_TIME:
 		get_tree().quit()
 		return
@@ -480,10 +481,11 @@ func _build_ui() -> void:
 	shade_rect = _full_rect(Color(0.02, 0.06, 0.12, 0.0))
 
 	# S1 導入（0〜3秒）
-	_caption("この海の未来、\nあなたが決める。", 0.0, 3.0, 640.0, 96, Color.WHITE, 0.12, true)
+	_caption("この海の未来、", 0.0, 3.0, 600.0, 88, Color.WHITE, 0.12)
+	_caption("あなたが決める。", 0.35, 3.0, 720.0, 112, Color(1.0, 0.85, 0.2), 0.12, true)
 	_card("投票でシリーズが決まる", 0.4, 3.0, 380.0, Color(1.0, 0.4, 0.35), 40, 640.0)
 	# S2 企画紹介（3〜7秒）
-	_caption("MARINK WORLD", 3.2, 7.1, 540.0, 128, Color(1.0, 0.96, 0.75))
+	_caption("MARINK WORLD", 3.2, 7.1, 540.0, 100, Color(1.0, 0.96, 0.75))
 	_caption("第0話｜はじまりの選択", 3.5, 7.1, 720.0, 60)
 	_caption("みんなの投票で、世界が変わる。", 3.8, 7.1, 820.0, 46)
 	# S3 3択（7〜12秒）
@@ -512,6 +514,9 @@ func _build_ui() -> void:
 	_caption("MARINK", 36.4, 38.0, 920.0, 150, Color(1.0, 0.96, 0.75))
 	_caption("海の生き物を、もっと面白く。", 36.6, 38.0, 1110.0, 46)
 
+	var vig := _full_rect(Color(1.0, 1.0, 1.0, 1.0))
+	vig.material = ShaderMaterial.new()
+	vig.material.shader = load("res://shaders/vignette.gdshader")
 	flash_rect = _full_rect(Color(1.0, 1.0, 1.0, 0.0))
 	fade_rect = _full_rect(Color(0.0, 0.0, 0.0, 1.0))
 
@@ -526,18 +531,28 @@ func _full_rect(c: Color) -> ColorRect:
 
 
 func _caption(text: String, t0: float, t1: float, y: float, fsize: int, col: Color = Color.WHITE, fade: float = 0.35, punch: bool = false) -> void:
+	var pc := PanelContainer.new()
+	pc.position = Vector2(40.0, y)
+	pc.custom_minimum_size = Vector2(1000.0, 0.0)
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.02, 0.08, 0.13, 0.7)
+	sb.set_corner_radius_all(18)
+	sb.content_margin_left = 24.0
+	sb.content_margin_right = 24.0
+	sb.content_margin_top = 10.0
+	sb.content_margin_bottom = 10.0
+	pc.add_theme_stylebox_override("panel", sb)
 	var l := Label.new()
 	l.text = text
-	l.position = Vector2(40.0, y)
-	l.custom_minimum_size = Vector2(1000.0, 0.0)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.add_theme_font_size_override("font_size", fsize)
 	l.add_theme_color_override("font_color", col)
 	l.add_theme_color_override("font_outline_color", Color(0.02, 0.1, 0.16, 0.95))
-	l.add_theme_constant_override("outline_size", int(fsize * 0.22))
-	l.modulate.a = 0.0
-	ui.add_child(l)
-	captions.append({"node": l, "t0": t0, "t1": t1, "y": y, "fade": fade, "punch": punch})
+	l.add_theme_constant_override("outline_size", int(fsize * 0.18))
+	pc.add_child(l)
+	pc.modulate.a = 0.0
+	ui.add_child(pc)
+	captions.append({"node": pc, "t0": t0, "t1": t1, "y": y, "fade": fade, "punch": punch})
 
 
 func _card(text: String, t0: float, t1: float, y: float, accent: Color, fsize: int = 56, width: float = 900.0) -> void:

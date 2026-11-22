@@ -1,0 +1,5 @@
+{
+  "points_per_like": 1,
+  "tie_policy": "undecided",
+  "note": "points_per_like: いいね1件あたりの発展ポイント（後から変更可能）。tie_policy: 同点・投票0件のときは未決定にする。"
+}

@@ -15,33 +15,27 @@
   python3 tools/make_audio.py
 必要なもの: Python 3, numpy, pyopenjtalk
 """
+import json
 import pathlib
 import wave
 
 import numpy as np
 
 SR = 48000
+ROOT = pathlib.Path(__file__).resolve().parent.parent
 DUR = 38.0                      # 実時間の長さ（秒）
 N = int(SR * DUR)
 STORY_LEN = 38.0                # 演出タイムラインの長さ（秒）
 K = DUR / STORY_LEN             # story 時刻 → 実時間の係数
-ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / "audio" / "bgm_mix.wav"
 OUT_NARR = ROOT / "audio" / "narration.wav"
 rng = np.random.default_rng(20260101)
 
-# 日本語ナレーション（開始時刻は実時間・秒）
-NARRATION = [
-    (0.30, "この海の未来、あなたが決める。"),
-    (3.40, "みんなの投票で、世界が変わる。"),
-    (7.20, "どの世界を始める？"),
-    (8.40, "海を育てる。水族館を作る。海底を調査する。"),
-    (12.60, "海を育てる。小さな海から、生き物たちの世界へ。"),
-    (16.60, "水族館を作る。何もない場所に、理想の水族館を。"),
-    (20.60, "海底を調査する。まだ知らない発見がある。"),
-    (25.40, "あなたはどれを選ぶ？ コメントに、1、2、3を送って投票。"),
-    (32.40, "次回、あなたの選択で世界が動く。フォローして見届けて。"),
-]
+# 日本語ナレーションの台本（config/narration.json が正）
+_NARR = json.loads((ROOT / "config" / "narration.json").read_text(encoding="utf-8"))["lines"]
+NARRATION = [(l["start"], l["text"]) for l in _NARR]
+NARRATION_IDS = [l["id"] for l in _NARR]
+GOOGLE_DIR = ROOT / "audio" / "narration_src"
 
 
 def midi(n: float) -> float:
@@ -134,10 +128,23 @@ def whoosh(dur: float, amp: float) -> np.ndarray:
 
 
 def narration_track() -> np.ndarray:
-    """pyopenjtalk でナレーションを生成し、指定時刻に配置する。"""
+    """ナレーションを配置する。Google の音声（audio/narration_src）があれば優先し、なければ pyopenjtalk を使う。"""
+    buf = np.zeros(N)
+    if all((GOOGLE_DIR / f"{i}.wav").exists() for i in NARRATION_IDS):
+        print("  Google Cloud Text-to-Speech の音声を使用します")
+        for (start, text), nid in zip(NARRATION, NARRATION_IDS):
+            with wave.open(str(GOOGLE_DIR / f"{nid}.wav"), "rb") as w:
+                ch = w.getnchannels()
+                x = np.frombuffer(w.readframes(w.getnframes()), dtype="<i2").astype(float) / 32768.0
+            if ch > 1:
+                x = x.reshape(-1, ch).mean(axis=1)
+            x = x * 0.9 / max(1e-9, np.max(np.abs(x)))
+            print(f"  narration {start:5.2f}s ({len(x)/SR:4.2f}s): {text}")
+            add_real(buf, start, x)
+        return buf
+    print("  Google の音声がないため、無料の音声（pyopenjtalk）を使用します")
     import pyopenjtalk
 
-    buf = np.zeros(N)
     for start, text in NARRATION:
         x, sr = pyopenjtalk.tts(text, speed=1.2)
         x = np.asarray(x, dtype=float)

@@ -28,6 +28,7 @@ var shade_rect: ColorRect
 var fade_rect: ColorRect
 var flash_rect: ColorRect
 var captions: Array = []
+var follower_label: Label
 var cards: Array = []
 var pops: Array = []     # {node, base, start, dur}: 伸びる・出現するノード
 var fishes: Array = []   # {node, tail, c, rx, rz, speed, phase, vis}
@@ -556,6 +557,15 @@ func _build_ui() -> void:
 	var vig := _full_rect(Color(1.0, 1.0, 1.0, 1.0))
 	vig.material = ShaderMaterial.new()
 	vig.material.shader = load("res://shaders/vignette.gdshader")
+	follower_label = Label.new()
+	follower_label.position = Vector2(40.0, 300.0)
+	follower_label.custom_minimum_size = Vector2(1000.0, 0.0)
+	follower_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	follower_label.add_theme_font_size_override("font_size", 58)
+	follower_label.add_theme_color_override("font_color", Color(1.0, 0.86, 0.3))
+	follower_label.add_theme_color_override("font_outline_color", Color(0.02, 0.1, 0.16, 0.95))
+	follower_label.add_theme_constant_override("outline_size", 12)
+	ui.add_child(follower_label)
 	flash_rect = _full_rect(Color(1.0, 1.0, 1.0, 0.0))
 	fade_rect = _full_rect(Color(0.0, 0.0, 0.0, 1.0))
 
@@ -642,6 +652,10 @@ func _update_overlays() -> void:
 	shade_rect.color.a = 0.32 * s
 	fade_rect.color.a = _fade_alpha(t)
 	flash_rect.color.a = 0.85 * clampf(1.0 - t / 0.22, 0.0, 1.0)
+	# フォロワー数：動画の進行とともに増え、島づくりがフォロワーの力で進むことを示す
+	var followers := int(round(_follower_count(t)))
+	follower_label.text = "フォロワー  %s人" % str(followers)
+	follower_label.modulate.a = _win(t, 0.4, 36.4, 0.4)
 
 
 ## 区間 [a, b] の中で a→a+fade でフェードイン、b-fade→b でフェードアウトする値（0〜1）
@@ -661,6 +675,12 @@ func _fade_alpha(x: float) -> float:
 	if x > 37.2:
 		a = maxf(a, (x - 37.2) / 0.8)
 	return clampf(a, 0.0, 1.0)
+
+
+func _follower_count(x: float) -> float:
+	# 0人から始まり、後半ほど速く増える（投票とフォローで伸びる様子）
+	var p := clampf((x - 2.0) / 34.0, 0.0, 1.0)
+	return 1280.0 * p * p * (0.6 + 0.4 * p)
 
 
 func _ease_out(x: float) -> float:

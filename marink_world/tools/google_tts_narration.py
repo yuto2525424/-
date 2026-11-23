@@ -23,22 +23,33 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 CONFIG = ROOT / "config" / "narration.json"
 OUT_DIR = ROOT / "audio" / "narration_src"
 URL = "https://texttospeech.googleapis.com/v1/text:synthesize"
-VOICE = os.environ.get("VOICE", "ja-JP-Neural2-B")
-SPEAKING_RATE = float(os.environ.get("SPEAKING_RATE", "1.0"))
+VOICE = os.environ.get("VOICE", "ja-JP-Chirp3-HD-Aoede")
+SPEAKING_RATE = float(os.environ.get("SPEAKING_RATE", "1.2"))
 
 
 def to_ssml(text: str, emphasis: str) -> str:
     """間と強調を付けて、感情が伝わる話し方にする（Neural2 の SSML）。"""
     t = text.replace("、", '、<break time="180ms"/>').replace("。", '。<break time="320ms"/>')
-    t = t.replace("？", '？<break time="260ms"/>').replace("！", '！<break time="260ms"/>')
+    t = t.replace("？", '？<break time="200ms"/>').replace("！", '！<break time="200ms"/>')
     if emphasis and emphasis in t:
         t = t.replace(emphasis, f'<emphasis level="strong">{emphasis}</emphasis>', 1)
     return f'<speak><prosody rate="110%" pitch="+1.5st">{t}</prosody></speak>'
 
 
+def to_ssml_chirp(text: str, emphasis: str) -> str:
+    t = text.replace("、", '、<break time="80ms"/>').replace("。", '。<break time="200ms"/>')
+    t = t.replace("？", '？<break time="160ms"/>').replace("！", '！<break time="160ms"/>')
+    if emphasis and emphasis in t:
+        t = t.replace(emphasis, f'<emphasis level="moderate">{emphasis}</emphasis>', 1)
+    return f"<speak>{t}</speak>"
+
+
 def synthesize(text: str, key: str, emphasis: str = "") -> bytes:
     if "Neural2" in VOICE or "Wavenet" in VOICE:
         payload_input = {"ssml": to_ssml(text, emphasis)}
+    elif "Chirp3" in VOICE:
+        # Chirp3-HD は間と強調のSSMLに対応（音の高さ・速さのSSMLは使わない）
+        payload_input = {"ssml": to_ssml_chirp(text, emphasis)}
     else:
         payload_input = {"text": text}
     body = json.dumps({

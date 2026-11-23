@@ -23,13 +23,26 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 CONFIG = ROOT / "config" / "narration.json"
 OUT_DIR = ROOT / "audio" / "narration_src"
 URL = "https://texttospeech.googleapis.com/v1/text:synthesize"
-VOICE = os.environ.get("VOICE", "ja-JP-Chirp3-HD-Aoede")
-SPEAKING_RATE = float(os.environ.get("SPEAKING_RATE", "1.15"))
+VOICE = os.environ.get("VOICE", "ja-JP-Neural2-B")
+SPEAKING_RATE = float(os.environ.get("SPEAKING_RATE", "1.0"))
 
 
-def synthesize(text: str, key: str) -> bytes:
+def to_ssml(text: str, emphasis: str) -> str:
+    """間と強調を付けて、感情が伝わる話し方にする（Neural2 の SSML）。"""
+    t = text.replace("、", '、<break time="180ms"/>').replace("。", '。<break time="320ms"/>')
+    t = t.replace("？", '？<break time="260ms"/>').replace("！", '！<break time="260ms"/>')
+    if emphasis and emphasis in t:
+        t = t.replace(emphasis, f'<emphasis level="strong">{emphasis}</emphasis>', 1)
+    return f'<speak><prosody rate="110%" pitch="+1.5st">{t}</prosody></speak>'
+
+
+def synthesize(text: str, key: str, emphasis: str = "") -> bytes:
+    if "Neural2" in VOICE or "Wavenet" in VOICE:
+        payload_input = {"ssml": to_ssml(text, emphasis)}
+    else:
+        payload_input = {"text": text}
     body = json.dumps({
-        "input": {"text": text},
+        "input": payload_input,
         "voice": {"languageCode": "ja-JP", "name": VOICE},
         "audioConfig": {
             "audioEncoding": "LINEAR16",
@@ -54,7 +67,7 @@ def main() -> None:
     print(f"voice={VOICE} rate={SPEAKING_RATE}")
     for line in config["lines"]:
         try:
-            wav = synthesize(line["text"], key)
+            wav = synthesize(line["text"], key, line.get("emphasis", ""))
         except urllib.error.HTTPError as e:
             detail = e.read().decode("utf-8", "replace")[:300]
             sys.exit(f"{line['id']} でエラー（HTTP {e.code}）: {detail}")

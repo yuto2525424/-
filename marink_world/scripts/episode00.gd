@@ -56,6 +56,8 @@ func _ready() -> void:
 	_build_school()
 	_build_sea_world()
 	_build_aquarium_world()
+	_build_crowd()
+	_build_hook_prop()
 	_build_research_world()
 	_build_emblems()
 	_build_ui()
@@ -106,8 +108,8 @@ func _accent(i: int) -> Color:
 
 func _build_environment() -> void:
 	var sky_mat := ProceduralSkyMaterial.new()
-	sky_mat.sky_top_color = Color(0.16, 0.5, 0.9)
-	sky_mat.sky_horizon_color = AIR_FOG
+	sky_mat.sky_top_color = Color(0.1, 0.56, 1.0)
+	sky_mat.sky_horizon_color = Color(0.7, 0.94, 1.0)
 	sky_mat.ground_horizon_color = Color(0.4, 0.72, 0.88)
 	sky_mat.ground_bottom_color = Color(0.1, 0.3, 0.45)
 	var sky := Sky.new()
@@ -373,6 +375,43 @@ func _torus(inner: float, outer: float) -> TorusMesh:
 	tm.inner_radius = inner
 	tm.outer_radius = outer
 	return tm
+
+
+## 冒頭の「?」の箱（参考動画の問いかけの見せ方を、海の世界に合わせた演出）
+var hook_root: Node3D
+
+
+func _build_hook_prop() -> void:
+	hook_root = Node3D.new()
+	hook_root.position = Vector3(0.0, 3.6, 2.0)
+	add_child(hook_root)
+	WorldBuilders.part(hook_root, WorldBuilders.box_mesh(Vector3(2.2, 2.2, 2.2)), Color(1.0, 0.82, 0.18), Vector3.ZERO, Vector3.ZERO, Vector3.ONE, 1.0, 0.25)
+	var q := Label3D.new()
+	q.text = "?"
+	q.font_size = 220
+	q.pixel_size = 0.012
+	q.modulate = Color(0.12, 0.12, 0.14)
+	q.outline_size = 0
+	q.position = Vector3(0.0, 0.0, 1.14)
+	hook_root.add_child(q)
+	_pop(hook_root, 0.0, 0.45)
+
+
+## 島にいる人たち（参考動画のように、街に人が集まる賑やかさを出す）
+func _build_crowd() -> void:
+	var colors := [Color(0.95, 0.35, 0.3), Color(0.3, 0.6, 0.95), Color(1.0, 0.8, 0.25), Color(0.35, 0.8, 0.5), Color(0.8, 0.45, 0.9), Color(1.0, 0.55, 0.2), Color(0.25, 0.75, 0.85), Color(0.95, 0.5, 0.6)]
+	for i in range(colors.size()):
+		var root := Node3D.new()
+		var x := -6.5 + i * 1.85
+		root.position = Vector3(x, 1.2, 5.8 + sin(i * 1.7) * 0.5)
+		add_child(root)
+		var cap := CapsuleMesh.new()
+		cap.radius = 0.32
+		cap.height = 1.3
+		WorldBuilders.part(root, cap, colors[i], Vector3(0.0, 0.65, 0.0))
+		WorldBuilders.part(root, WorldBuilders.sphere_mesh(0.3, 8, 4), Color(1.0, 0.86, 0.72), Vector3(0.0, 1.6, 0.0))
+		root.scale = Vector3(0.001, 0.001, 0.001)
+		_pop(root, 18.0 + i * 0.12, 0.45)
 
 
 func _pop(node: Node3D, start: float, dur: float) -> void:

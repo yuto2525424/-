@@ -7,7 +7,7 @@ Claudeの環境では、ネットワーク秘密情報（ヘッダー x-goog-api
 
 使い方:
   GOOGLE_TTS_API_KEY=... python3 tools/google_tts_narration.py
-  VOICE=ja-JP-Neural2-B python3 tools/google_tts_narration.py   # 声を変える場合（任意）
+  VOICE=ja-JP-Chirp3-HD-Leda python3 tools/google_tts_narration.py   # 声を変える場合（任意）
 
 出力: audio/narration_src/01.wav 〜 09.wav（48kHz・モノラル・16bit）
 """
@@ -23,7 +23,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 CONFIG = ROOT / "config" / "narration.json"
 OUT_DIR = ROOT / "audio" / "narration_src"
 URL = "https://texttospeech.googleapis.com/v1/text:synthesize"
-VOICE = os.environ.get("VOICE", "ja-JP-Neural2-B")
+VOICE = os.environ.get("VOICE", "ja-JP-Chirp3-HD-Aoede")
 SPEAKING_RATE = float(os.environ.get("SPEAKING_RATE", "1.15"))
 
 
@@ -35,7 +35,6 @@ def synthesize(text: str, key: str) -> bytes:
             "audioEncoding": "LINEAR16",
             "sampleRateHertz": 48000,
             "speakingRate": SPEAKING_RATE,
-            "pitch": 0.0,
         },
     }).encode("utf-8")
     req = urllib.request.Request(URL, data=body, method="POST")

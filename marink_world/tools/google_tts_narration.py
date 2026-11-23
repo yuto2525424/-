@@ -24,7 +24,7 @@ CONFIG = ROOT / "config" / "narration.json"
 OUT_DIR = ROOT / "audio" / "narration_src"
 URL = "https://texttospeech.googleapis.com/v1/text:synthesize"
 VOICE = os.environ.get("VOICE", "ja-JP-Neural2-B")
-SPEAKING_RATE = float(os.environ.get("SPEAKING_RATE", "1.05"))
+SPEAKING_RATE = float(os.environ.get("SPEAKING_RATE", "1.15"))
 
 
 def synthesize(text: str, key: str) -> bytes:
@@ -40,16 +40,16 @@ def synthesize(text: str, key: str) -> bytes:
     }).encode("utf-8")
     req = urllib.request.Request(URL, data=body, method="POST")
     req.add_header("Content-Type", "application/json; charset=utf-8")
-    req.add_header("x-goog-api-key", key)
+    if key:
+        req.add_header("x-goog-api-key", key)
     with urllib.request.urlopen(req, timeout=60) as res:
         data = json.loads(res.read().decode("utf-8"))
     return base64.b64decode(data["audioContent"])
 
 
 def main() -> None:
+    # キーは環境変数で渡すか、ネットワーク秘密情報として登録しておく（その場合はヘッダーが自動で付く）
     key = os.environ.get("GOOGLE_TTS_API_KEY", "").strip()
-    if not key:
-        sys.exit("GOOGLE_TTS_API_KEY が設定されていません。キーを環境に登録してから実行してください。")
     config = json.loads(CONFIG.read_text(encoding="utf-8"))
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     print(f"voice={VOICE} rate={SPEAKING_RATE}")
